@@ -2,7 +2,21 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const dbPath = path.join(__dirname, 'auth.db');
+// Use /tmp for Railway ephemeral storage, fallback to local path
+const dbPath = (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') 
+    ? path.join('/tmp', 'auth.db')
+    : path.join(__dirname, 'auth.db');
+
+// Ensure /tmp directory exists on Railway
+if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+    const fs = require('fs');
+    if (!fs.existsSync('/tmp')) {
+        fs.mkdirSync('/tmp', { recursive: true });
+    }
+    console.log(`Database path (Railway): ${dbPath}`);
+} else {
+    console.log(`Database path (local): ${dbPath}`);
+}
 const DEFAULT_ADMIN_EMAIL = String(
     process.env.DEFAULT_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'kitu@gmail.com'
 ).trim().toLowerCase();
@@ -48,8 +62,10 @@ function ensureDefaultAdmin() {
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err);
+        console.error('Database path:', dbPath);
+        process.exit(1);
     } else {
-        console.log('Connected to SQLite database');
+        console.log('Connected to SQLite database successfully');
         initializeDatabase();
     }
 });
@@ -190,6 +206,12 @@ function initializeDatabase() {
     db.run(`ALTER TABLE exe_users ADD COLUMN lock_until DATETIME`, (err) => {
         if (err && !err.message.includes('duplicate column name')) console.error('exe_users lock_until migration:', err);
     });
+
+    // Create default admin after all tables are ready
+    setTimeout(() => {
+        ensureDefaultAdmin();
+        console.log('Database initialization completed');
+    }, 1000);
 }
 
 module.exports = db;

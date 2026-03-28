@@ -2,9 +2,15 @@ const db = require('./database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-key-change-this-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ADMIN_JWT_EXPIRY = '7d';
+
+// Validate required secrets
+if (!JWT_SECRET || !ADMIN_JWT_SECRET) {
+    console.error('❌ JWT_SECRET and ADMIN_JWT_SECRET environment variables are required');
+    process.exit(1);
+}
 
 // Generate admin JWT token
 function generateAdminToken(adminId) {

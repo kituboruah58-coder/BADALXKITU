@@ -11,14 +11,23 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET', 'ADMIN_JWT_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0 && process.env.NODE_ENV === 'production') {
+    console.error('❌ Missing required environment variables:', missingVars.join(', '));
+    console.error('Please set these in your Railway dashboard and redeploy');
+    process.exit(1);
+}
+
 const auth = require('./auth');
 const admin = require('./admin');
 const db = require('./database');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 const ADMIN_PORT = process.env.ADMIN_PORT || 5001;
-const ADMIN_LISTEN_PORT = Number(ADMIN_PORT) === Number(PORT) ? Number(PORT) + 1 : ADMIN_PORT;
+const ADMIN_LISTEN_PORT = Number(ADMIN_PORT) === Number(process.env.PORT || 5000) ? Number(process.env.PORT || 5000) + 1 : ADMIN_PORT;
 const EXE_SIGNING_SECRET = process.env.EXE_SIGNING_SECRET || 'cloudx-exe-signing-v1';
 const EXE_SIGNATURE_WINDOW_SECONDS = Math.max(60, Number(process.env.EXE_SIGNATURE_WINDOW_SECONDS || 300));
 const EXE_LOGIN_TOKEN_SECRET = process.env.EXE_LOGIN_TOKEN_SECRET || 'exe-login-secret-change-this';
@@ -1146,10 +1155,31 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// Start main server
-app.listen(PORT, () => {
-    console.log(`✓ Server running on http://localhost:${PORT}`);
-    console.log(`✓ Frontend available at http://localhost:${PORT}`);
+// Start main server - Railway compatible
+const PORT = process.env.PORT || 5000;
+
+console.log('Starting server...');
+console.log('Environment:', process.env.NODE_ENV || 'development');
+console.log('Port:', PORT);
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✓ Server running on port ${PORT}`);
+    console.log(`✓ Health check available at: http://localhost:${PORT}/api/health`);
+});
+
+// Handle server errors
+server.on('error', (err) => {
+    console.error('Server error:', err);
+    process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
 
 // Admin server on different port
