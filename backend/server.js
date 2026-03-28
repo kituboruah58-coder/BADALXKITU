@@ -1416,6 +1416,6 @@ adminApp.get('*', (req, res) => {
 });
 
 // Start admin server
-adminApp.listen(ADMIN_LISTEN_PORT, () => {
+if (String(process.env.NODE_ENV || '').trim().toLowerCase() !== 'production') adminApp.listen(ADMIN_LISTEN_PORT, () => {
     console.log(`✓ Admin dashboard running on http://localhost:${ADMIN_PORT}`);
 });
