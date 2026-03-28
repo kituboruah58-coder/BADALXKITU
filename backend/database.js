@@ -3,6 +3,48 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const dbPath = path.join(__dirname, 'auth.db');
+const DEFAULT_ADMIN_EMAIL = String(
+    process.env.DEFAULT_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'kitu@gmail.com'
+).trim().toLowerCase();
+const DEFAULT_ADMIN_PASSWORD = String(
+    process.env.DEFAULT_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'kitu123'
+).trim();
+
+function ensureDefaultAdmin() {
+    if (!DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) {
+        console.warn('Default admin seed skipped: missing DEFAULT_ADMIN_EMAIL/DEFAULT_ADMIN_PASSWORD');
+        return;
+    }
+
+    db.get('SELECT id FROM admins WHERE email = ?', [DEFAULT_ADMIN_EMAIL], async (checkErr, row) => {
+        if (checkErr) {
+            console.error('Error checking default admin:', checkErr);
+            return;
+        }
+        if (row) {
+            console.log(`Default admin exists: ${DEFAULT_ADMIN_EMAIL}`);
+            return;
+        }
+
+        try {
+            const hashedPassword = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
+            db.run(
+                'INSERT INTO admins (email, password) VALUES (?, ?)',
+                [DEFAULT_ADMIN_EMAIL, hashedPassword],
+                (insertErr) => {
+                    if (insertErr) {
+                        console.error('Error creating default admin:', insertErr);
+                        return;
+                    }
+                    console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL}`);
+                }
+            );
+        } catch (hashErr) {
+            console.error('Error hashing default admin password:', hashErr);
+        }
+    });
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err);
@@ -73,7 +115,10 @@ function initializeDatabase() {
         )
     `, (err) => {
         if (err) console.error('Error creating admins table:', err);
-        else console.log('Admins table ready');
+        else {
+            console.log('Admins table ready');
+            ensureDefaultAdmin();
+        }
     });
 
     // License keys table
