@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SecureAuth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 24px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .welcome-card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .user-info {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .user-info p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .user-info strong {
+            color: #667eea;
+            margin-right: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 15px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .feature-card.lite::before {
+            background: linear-gradient(90deg, #4caf50, #45a049);
+        }
+
+        .feature-card.pro::before {
+            background: linear-gradient(90deg, #2196F3, #1976D2);
+        }
+
+        .feature-card.max::before {
+            background: linear-gradient(90deg, #ff9800, #f57c00);
+        }
+
+        .feature-card.ultra::before {
+            background: linear-gradient(90deg, #9c27b0, #7b1fa2);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .tier-lite .tier-badge {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .tier-pro .tier-badge {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196F3;
+        }
+
+        .tier-max .tier-badge {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .tier-ultra .tier-badge {
+            background: rgba(156, 39, 176, 0.2);
+            color: #9c27b0;
+        }
+
+        .feature-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .features-list {
+            text-align: left;
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .features-list li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            font-size: 18px;
+            color: white;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+
+            .welcome-card {
+                padding: 20px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>☁️ CLOUD X STREAMER</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+        <div class="welcome-card" id="dashboardContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                Loading your dashboard...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_ORIGIN = window.location.protocol === 'file:' ? 'http://localhost:5000' : window.location.origin;
+        const API_URL = `${API_ORIGIN}/api`;
+        const DISCORD_URL = 'https://discord.gg/G54H6hpfrc';
+        let currentUser = null;
+
+        function redirectToDiscord(delay = 1800) {
+            setTimeout(() => {
+                window.location.href = DISCORD_URL;
+            }, delay);
+        }
+
+        function openTierFeature(tierKey) {
+            if (!currentUser?.[tierKey]) {
+                document.getElementById('dashboardContent').innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: #f8d7da; border-radius: 15px; border: 2px solid #f5c6cb; color: #721c24;">
+                        <h2>🚫 Access Denied</h2>
+                        <p>This tier is not enabled for your account. Talk to the developer.</p>
+                        <p>Redirecting to Discord...</p>
+                        <p><a href="${DISCORD_URL}" target="_blank" style="color: #667eea; font-weight: bold;">Open Discord</a></p>
+                        <button class="logout-btn" onclick="logout()" style="margin-top: 20px;">Back to Login</button>
+                    </div>
+                `;
+                redirectToDiscord();
+                return;
+            }
+
+            if (tierKey !== 'streamer_lite') {
+                let tierName = 'This tier';
+                if (tierKey === 'streamer_pro') tierName = 'STREAMER PRO';
+                if (tierKey === 'streamer_max') tierName = 'STREAMER MAX';
+                if (tierKey === 'streamer_ultra') tierName = 'STREAMER ULTRA';
+                alert(`${tierName} is under construction.`);
+                return;
+            }
+
+            window.location.href = '/red-x-control.html';
+        }
+
+async function loadDashboard() {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                window.location.href = '/index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    document.getElementById('dashboardContent').innerHTML = `
+                        <div style="text-align: center; padding: 60px; background: #f8d7da; border-radius: 15px; border: 2px solid #f5c6cb; color: #721c24;">
+                            <h2>🚫 Access Denied</h2>
+                            <p>${errorData.error || 'Streamer tier required.'}</p>
+                            <p>Talk to the developer. Redirecting to Discord...</p>
+                            <p><a href="${DISCORD_URL}" target="_blank" style="color: #667eea; font-weight: bold;">Join Discord for Tiers</a></p>
+                            <button class="logout-btn" onclick="logout()" style="margin-top: 20px;">Login</button>
+                        </div>
+                    `;
+                    redirectToDiscord();
+                    return;
+                }
+
+                const user = await response.json();
+                displayDashboard(user);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                logout();
+            }
+        }
+
+        function displayDashboard(user) {
+            const now = new Date();
+            currentUser = user;
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            dashboardContent.innerHTML = `
+                <h2>Welcome, ${user.username}! 👋</h2>
+                
+                <div class="user-info">
+                    <p><strong>Username:</strong> ${user.username}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Account Created:</strong> ${now.toLocaleDateString()}</p>
+                    <div class="status">✓ Active & Verified</div>
+                </div>
+
+                <h3 style="margin-top: 30px; color: #333;">Streamer Tiers</h3>
+                <div class="features">
+                    <div class="feature-card tier-lite" onclick="window.location.href='red-x-control.html'" style="cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-10px); this.style.boxShadow='0 15px 30px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow=''">
+                        <div class="tier-badge">Tier 1</div>
+                        <div class="feature-icon">⭐</div>
+                        <h3>STREAMER LITE</h3>
+                        <p>Essential gaming & hacking tools for your streams.</p>
+                        <div class="features-list">
+                            <ul>
+                                <li>Custom Game Overlays</li>
+                                <li>Advanced Game Moderation</li>
+                                <li>Game Detection AI</li>
+                                <li>Custom Alerts & Effects</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card tier-pro">
+                        <div class="tier-badge">Tier 2</div>
+                        <div class="feature-icon">💻</div>
+                        <h3>STREAMER PRO</h3>
+                        <p>Advanced hacking & gaming tools for serious streamers.</p>
+                        <div class="features-list">
+                            <ul>
+                                <li>Multi-Game Exploit Library</li>
+                                <li>Real-time Performance Hacks</li>
+                                <li>Stream Encryption Suite</li>
+                                <li>Advanced Bot Detection</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card tier-max">
+                        <div class="tier-badge">Tier 3</div>
+                        <div class="feature-icon">🔓</div>
+                        <h3>STREAMER MAX</h3>
+                        <p>Professional-grade security & gaming dominance tools.</p>
+                        <div class="features-list">
+                            <ul>
+                                <li>Full Game Mods Database</li>
+                                <li>Advanced Cheat Toolkit</li>
+                                <li>Network Optimization Suite</li>
+                                <li>Premium Stream Spoofing</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card tier-ultra">
+                        <div class="tier-badge">Tier 4</div>
+                        <div class="feature-icon">⚡</div>
+                        <h3>STREAMER ULTRA</h3>
+                        <p>Elite hacker & gamer tools with unlimited power.</p>
+                        <div class="features-list">
+                            <ul>
+                                <li>Unlimited Game Exploits</li>
+                                <li>Custom Hack Creation Suite</li>
+                                <li>Full System Control Panel</li>
+                                <li>VIP Support & Exclusive Updates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="logout()">Logout</button>
+                </div>
+            `;
+
+            [
+                { selector: '.tier-lite', key: 'streamer_lite' },
+                { selector: '.tier-pro', key: 'streamer_pro' },
+                { selector: '.tier-max', key: 'streamer_max' },
+                { selector: '.tier-ultra', key: 'streamer_ultra' }
+            ].forEach(({ selector, key }) => {
+                const card = dashboardContent.querySelector(selector);
+                if (!card) return;
+
+                const enabled = !!user[key];
+                card.style.cursor = enabled ? 'pointer' : 'not-allowed';
+                card.style.opacity = enabled ? '1' : '0.65';
+                card.onclick = () => openTierFeature(key);
+
+                const status = document.createElement('p');
+                status.style.margin = '12px 0 16px';
+                status.style.padding = '10px 12px';
+                status.style.borderRadius = '10px';
+                status.style.fontWeight = '700';
+                status.style.background = enabled ? '#dcfae6' : '#fee4e2';
+                status.style.color = enabled ? '#0a7d35' : '#b42318';
+                status.textContent = enabled ? 'Enabled' : 'Not enabled. Talk to the developer.';
+
+                const description = card.querySelector('p');
+                if (description) {
+                    description.insertAdjacentElement('afterend', status);
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        }
+
+
+
+        // Load dashboard on page load
+        window.addEventListener('load', loadDashboard);
+    </script>
+</body>
+</html>

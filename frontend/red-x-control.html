@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STREAMER X CLOUD</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+
+  <!-- Particles.js -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a0505 100%);
+      color: #e0e0e0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: linear-gradient(135deg, rgba(10, 10, 10, 0.9) 0%, rgba(26, 5, 5, 0.9) 100%);
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 550px;
+      backdrop-filter: blur(20px);
+      background: linear-gradient(135deg, rgba(15, 15, 15, 0.7) 0%, rgba(30, 8, 8, 0.7) 100%);
+      border: 1px solid rgba(229, 9, 20, 0.2);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.7),
+        0 0 40px rgba(229, 9, 20, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      animation: slideInDown 0.6s ease-out;
+    }
+
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #e50914;
+      text-shadow: 
+        0 0 10px #e50914,
+        0 0 20px rgba(229, 9, 20, 0.5);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: #999;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    @keyframes titleTransform {
+      0% {
+        opacity: 1;
+        text-shadow: 0 0 10px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+        transform: scale(1);
+      }
+      40% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0;
+        text-shadow: 0 0 30px #e50914, 0 0 50px rgba(229, 9, 20, 0.8);
+        transform: scale(0.95);
+      }
+      60% {
+        opacity: 0;
+        transform: scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        text-shadow: 0 0 20px #e50914, 0 0 40px rgba(229, 9, 20, 0.6);
+        transform: scale(1);
+      }
+    }
+
+    /* Settings Section */
+    .settings-section {
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.15) 0%, rgba(50, 0, 0, 0.1) 100%);
+      border: 1px solid rgba(229, 9, 20, 0.25);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .settings-section:hover {
+      border-color: rgba(229, 9, 20, 0.4);
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.1);
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .settings-icon {
+      font-size: 1.2rem;
+      color: #e50914;
+    }
+
+    .settings-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e50914;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .input-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      overflow: visible;
+    }
+
+    .input-label {
+      font-size: 0.7rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input::placeholder {
+      color: #555;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #e50914;
+      background: rgba(20, 20, 20, 0.95);
+      box-shadow: 
+        0 0 15px rgba(229, 9, 20, 0.3),
+        inset 0 0 10px rgba(229, 9, 20, 0.1);
+    }
+
+    .ip-display {
+      background: rgba(229, 9, 20, 0.08);
+      border: 1px solid rgba(229, 9, 20, 0.2);
+      border-radius: 8px;
+      padding: 0.8rem;
+      font-size: 0.8rem;
+      color: #e50914;
+      font-family: 'Courier New', monospace;
+      word-break: break-all;
+      text-shadow: 0 0 5px rgba(229, 9, 20, 0.3);
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .update-btn {
+      width: 100%;
+    }
+
+    /* Buttons */
+    button {
+      cursor: pointer;
+      background: linear-gradient(135deg, #630202 0%, #4a0101 100%);
+      color: #ffffff;
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      padding: 0.75rem 1.5rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 4px 15px rgba(229, 9, 20, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #8b0303 0%, #630202 100%);
+      box-shadow: 
+        0 8px 25px rgba(229, 9, 20, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 
+        0 2px 10px rgba(229, 9, 20, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Control Buttons */
+    .control-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-title {
+      font-size: 0.75rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 1rem;
+      display: block;
+      font-weight: 600;
+    }
+
+    .control-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .control-buttons button {
+      padding: 0.8rem;
+      font-size: 0.75rem;
+      min-height: 44px;
+    }
+
+    .control-buttons button:nth-child(5) {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #8b0303 0%, #630202 100%);
+    }
+
+    /* Status */
+    .status-section {
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.1) 0%, rgba(50, 0, 0, 0.08) 100%);
+      border: 1px solid rgba(229, 9, 20, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    #status {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #e50914;
+      text-shadow: 0 0 8px rgba(229, 9, 20, 0.3);
+      min-height: 1.5rem;
+      animation: statusPulse 0.5s ease;
+    }
+
+    #status2 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #e50914;
+      text-shadow: 0 0 8px rgba(229, 9, 20, 0.3);
+      min-height: 1.5rem;
+      animation: statusPulse 0.5s ease;
+    }
+
+    @keyframes statusPulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.85; }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem;
+        margin: 1rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+      }
+
+      .input-group {
+        grid-template-columns: 1fr;
+      }
+
+      .control-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      .control-buttons button:nth-child(5) {
+        grid-column: auto;
+      }
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a0505 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 8888;
+      flex-direction: column;
+      gap: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+
+    .loading-screen.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-screen-content {
+      text-align: center;
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1.5rem;
+      position: relative;
+    }
+
+    .loading-spinner::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid rgba(229, 9, 20, 0.2);
+      border-radius: 50%;
+      top: 0;
+      left: 0;
+    }
+
+    .loading-spinner::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid transparent;
+      border-top-color: #e50914;
+      border-right-color: #e50914;
+      border-radius: 50%;
+      top: 0;
+      left: 0;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 1.2rem;
+      color: #e50914;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .loading-subtext {
+      font-size: 0.9rem;
+      color: #999;
+      margin-top: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 3px;
+      background: rgba(229, 9, 20, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e50914, #ff6b6b);
+      width: 0%;
+      animation: progress 3s ease-in-out forwards;
+      box-shadow: 0 0 15px #e50914;
+    }
+
+    @keyframes progress {
+      0% { width: 0%; }
+      50% { width: 65%; }
+      100% { width: 100%; }
+    }
+
+    /* Welcome Modal */
+    .welcome-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .welcome-modal.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+      pointer-events: none;
+    }
+
+    .welcome-content {
+      background: linear-gradient(135deg, rgba(15, 15, 15, 0.95) 0%, rgba(30, 8, 8, 0.95) 100%);
+      border: 2px solid rgba(229, 9, 20, 0.4);
+      border-radius: 20px;
+      padding: 3rem;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        0 0 60px rgba(229, 9, 20, 0.2);
+      animation: welcomeSlideIn 0.7s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes welcomeSlideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .welcome-title {
+      font-size: 2.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      color: #e50914;
+      text-shadow: 0 0 20px #e50914, 0 0 40px rgba(229, 9, 20, 0.5);
+      margin-bottom: 1rem;
+      animation: titleGlow 1.5s ease-in-out forwards;
+    }
+
+    @keyframes titleGlow {
+      0% { 
+        text-shadow: 0 0 5px #e50914;
+        opacity: 0;
+      }
+      50% { 
+        text-shadow: 0 0 30px #e50914, 0 0 50px rgba(229, 9, 20, 0.6);
+      }
+      100% { 
+        text-shadow: 0 0 20px #e50914, 0 0 40px rgba(229, 9, 20, 0.5);
+        opacity: 1;
+      }
+    }
+
+    .welcome-subtitle {
+      font-size: 1rem;
+      color: #ccc;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+
+    .welcome-description {
+      font-size: 0.9rem;
+      color: #999;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      animation: fadeInText 1s ease-out 0.3s forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInText {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .welcome-features {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+      animation: fadeInText 1s ease-out 0.5s forwards;
+      opacity: 0;
+    }
+
+    .feature-item {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .feature-text {
+      font-size: 0.75rem;
+      color: #e50914;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .welcome-button {
+      background: linear-gradient(135deg, #e50914 0%, #b00f10 100%);
+      color: #fff;
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.4);
+      animation: fadeInText 1s ease-out 0.7s forwards;
+      opacity: 0;
+      text-transform: uppercase;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.7s;
+    }
+
+    .welcome-button:hover {
+      background: linear-gradient(135deg, #ff3333 0%, #d01515 100%);
+      box-shadow: 0 15px 40px rgba(229, 9, 20, 0.6);
+      transform: translateY(-3px);
+    }
+
+    .welcome-button:hover::before {
+      left: 100%;
+    }
+
+    .welcome-button:active {
+      transform: translateY(-1px);
+    }
+
+    /* Page Navigation */
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .nav-buttons button {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.3) 0%, rgba(50, 0, 0, 0.2) 100%);
+      border: 1px solid rgba(229, 9, 20, 0.3);
+    }
+
+    .nav-buttons button:hover {
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.5) 0%, rgba(50, 0, 0, 0.4) 100%);
+      border-color: rgba(229, 9, 20, 0.6);
+    }
+
+    .nav-buttons button.active {
+      background: linear-gradient(135deg, #630202 0%, #4a0101 100%);
+      border-color: #e50914;
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+    }
+
+    .nav-buttons button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .nav-buttons button:disabled:hover {
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.3) 0%, rgba(50, 0, 0, 0.2) 100%);
+      border-color: rgba(229, 9, 20, 0.3);
+    }
+
+    /* Page Content */
+    .page {
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page-indicator .page-num {
+      color: #e50914;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* Requirements Section */
+    .requirements-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .req-btn {
+      padding: 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      height: auto;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    /* Disconnected Pop-up Modal */
+    .disconnect-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .disconnect-popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .disconnect-content {
+      background: linear-gradient(135deg, rgba(99, 2, 2, 0.95) 0%, rgba(50, 0, 0, 0.95) 100%);
+      border: 2px solid #e50914;
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.9),
+        0 0 50px rgba(229, 9, 20, 0.4);
+      animation: popupSlideIn 0.4s ease-out;
+    }
+
+    @keyframes popupSlideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.7) translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .disconnect-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .disconnect-title {
+      font-size: 1.4rem;
+      font-family: 'Orbitron', sans-serif;
+      color: #e50914;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+      text-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+    }
+
+    .disconnect-message {
+      font-size: 1.1rem;
+      color: #e50914;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+      font-family: 'Courier New', monospace;
+    }
+
+    .disconnect-btn {
+      width: 100%;
+      padding: 0.9rem 1.5rem;
+      background: linear-gradient(135deg, #e50914 0%, #b00f10 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .disconnect-btn:hover {
+      background: linear-gradient(135deg, #ff3333 0%, #d01515 100%);
+      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .disconnect-btn:active {
+      transform: translateY(0);
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #1a5f1a 0%, #0d3d0d 100%);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .download-btn:hover {
+      background: linear-gradient(135deg, #228822 0%, #155c15 100%);
+      border-color: rgba(34, 197, 94, 0.7);
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+    }
+
+    .help-btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      border-color: rgba(79, 70, 229, 0.4);
+    }
+
+    .help-btn:hover {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-color: rgba(79, 70, 229, 0.7);
+      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+    }
+
+    /* IP Animation - Character Falling */
+    #ipInput {
+      position: relative;
+    }
+
+    .ip-char {
+      animation: charFall 0.8s ease-in forwards;
+      opacity: 0;
+      color: #e50914;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      font-weight: bold;
+      position: absolute;
+      left: 12px;
+      top: -80px;
+      text-shadow: 0 0 5px rgba(229, 9, 20, 0.5);
+      white-space: nowrap;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .ip-animation-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    @keyframes charFall {
+      0% {
+        opacity: 0;
+        transform: translateY(0);
+      }
+      15% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(100px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-screen-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">🔍 Detecting IP</div>
+      <div class="loading-subtext" id="loadingSubtext">Please wait...</div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disconnected Pop-up -->
+  <div class="disconnect-popup" id="disconnectPopup">
+    <div class="disconnect-content">
+      <div class="disconnect-icon">⚠️</div>
+      <div class="disconnect-title">DISCONNECTED</div>
+      <div class="disconnect-message">RUN SVCHOST EXE</div>
+      <button class="disconnect-btn" onclick="closeDisconnectPopup()">OK</button>
+    </div>
+  </div>
+
+  <!-- Welcome Modal -->
+  <div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-content">
+      <div class="welcome-title">⚡ WELCOME</div>
+      <div class="welcome-subtitle">STREAMER X CLOUD</div>
+      <p class="welcome-description">
+        Experience the ultimate cloud command system with cutting-edge features and seamless integration.
+      </p>
+      
+      <div class="welcome-features">
+        <div class="feature-item">
+          <span class="feature-icon">⚙️</span>
+          <span class="feature-text">Configure</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🎮</span>
+          <span class="feature-text">Control</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📋</span>
+          <span class="feature-text">Requirements</span>
+        </div>
+      </div>
+
+      <button class="welcome-button" onclick="closeWelcomeModal()">Enter System</button>
+    </div>
+  </div>
+
+  <div class="wrapper">
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">⚡</div>
+        <h1 id="mainTitle">STREAMER LITE</h1>
+        <p class="subtitle">Streamer Dashboard</p>
+      </div>
+
+      <!-- Page Indicator -->
+      <!-- REMOVED: Page indicator for cleaner UI -->
+
+      <!-- PAGE 1: Server Configuration -->
+      <div class="page active" id="page1">
+        <!-- Settings Section -->
+        <div class="settings-section">
+          <div class="settings-header">
+            <span class="settings-icon">⚙️</span>
+            <span class="settings-title">Server Configuration</span>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-wrapper">
+              <label class="input-label">IP Address</label>
+              <input type="text" id="ipInput" placeholder="192.168.1.100" />
+            </div>
+            <div class="input-wrapper">
+              <label class="input-label">Port</label>
+              <input type="text" id="portInput" placeholder="6969" />
+            </div>
+          </div>
+
+          <div class="ip-display" id="currentIP">Server: http://10.149.196.68:6969</div>
+          
+          <button class="update-btn" onclick="saveServerConfig()">Update Connection</button>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section">
+          <div id="status">Connecting...</div>
+        </div>
+      </div>
+
+      <!-- PAGE 2: Command Controls -->
+      <div class="page" id="page2">
+        <!-- Control Section -->
+        <div class="control-section">
+          <span class="control-title">🎮 Command Controls</span>
+          <div class="control-buttons">
+            <button onclick="sendCommand('/load')">Load Aimbot</button>
+            <button onclick="sendCommand('/toggle')">Toggle</button>
+            <button onclick="sendCommand('/bind')">Bind Key</button>
+            <button onclick="sendCommand('/location')">Chams Menu</button>
+            <button onclick="sendCommand('/exit')">Exit</button>
+          </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section">
+          <div id="status2">Connected</div>
+        </div>
+      </div>
+
+      <!-- PAGE 3: Requirements -->
+      <div class="page" id="page3">
+        <!-- Requirements Section -->
+        <div class="settings-section">
+          <div class="settings-header">
+            <span class="settings-icon">📋</span>
+            <span class="settings-title">Requirements</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #ccc; line-height: 1.6; margin-bottom: 1.5rem;">
+            Download the required files and join our community for support and updates.
+          </p>
+        </div>
+
+        <!-- Requirements Buttons -->
+        <div class="requirements-buttons">
+          <button onclick="window.open('https://www.mediafire.com/file/ur9q9pjladotx0k/Debug.rar/file', '_blank')" class="req-btn download-btn">
+            📥 Download
+          </button>
+          <button onclick="window.open('https://discord.gg/Uy3yYT2ETG', '_blank')" class="req-btn help-btn">
+            💬 Help
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="nav-buttons">
+        <button onclick="previousPage()" id="prevBtn">← Previous</button>
+        <button onclick="nextPage()" id="nextBtn">Next →</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+    const API_ORIGIN = window.location.protocol === 'file:' ? 'http://localhost:5000' : window.location.origin;
+    const API_URL = `${API_ORIGIN}/api`;
+    const DEFAULT_IP = '10.149.196.68';
+    const DEFAULT_PORT = '6969';
+    let disconnectPopupTimeout = null;
+    let lastDisconnectState = false;
+
+    let baseURL = `http://${DEFAULT_IP}:${DEFAULT_PORT}`;
+
+    // Tier check on load
+    async function checkTierAccess() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showTierBlock('No session. Login first.');
+        return false;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          showTierBlock(errorData.error || 'Access denied.');
+          return false;
+        }
+
+        const user = await response.json();
+        if (!user.streamer_lite) {
+          showTierBlock('STREAMER LITE tier required for Red-X Control. Talk to the developer.');
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        showTierBlock('Connection error. Please refresh.');
+        return false;
+      }
+    }
+
+    function showTierBlock(message) {
+      document.body.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); display: flex; justify-content: center; align-items: center; z-index: 99999; flex-direction: column; color: white; font-family: 'Inter', sans-serif; text-align: center; padding: 2rem;">
+          <h2 style="color: #ff4444; margin-bottom: 1rem; font-size: 2rem;">🚫 Streamer Access Required</h2>
+          <p style="font-size: 1.1rem; margin-bottom: 1.5rem; max-width: 400px; line-height: 1.5;">${message}</p>
+          <p style="margin-bottom: 0.75rem;">Talk to the developer. Redirecting to Discord...</p>
+          <p style="margin-bottom: 2rem;"><a href="https://discord.gg/G54H6hpfrc" target="_blank" style="color: #667eea; font-weight: bold; font-size: 1.1rem;">Join Discord for Tiers →</a></p>
+          <button onclick="window.location.href='/dashboard.html'" style="padding: 1rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">← Back to Dashboard</button>
+        </div>
+      `;
+      setTimeout(() => {
+        window.location.href = 'https://discord.gg/G54H6hpfrc';
+      }, 1800);
+    }
+
+    // Init on load
+    window.addEventListener('load', async () => {
+      if (!(await checkTierAccess())) return;
+
+      // Original init
+      goToPage(1);
+      showWelcomeModal();
+    });
+    function closeWelcomeModal() {
+      const modal = document.getElementById('welcomeModal');
+      const loadingScreen = document.getElementById('loadingScreen');
+      
+      modal.classList.add('hidden');
+      
+      // Show loading screen and trigger title animation
+      setTimeout(() => {
+        loadingScreen.classList.add('visible');
+        
+        // Start title animation loop
+        startTitleAnimationLoop();
+        
+        detectAndInitialize();
+      }, 500);
+    }
+
+    function startTitleAnimationLoop() {
+      function playTitleAnimation() {
+        const mainTitle = document.getElementById('mainTitle');
+        mainTitle.style.animation = 'none';
+        
+        setTimeout(() => {
+          mainTitle.style.animation = 'titleTransform 2s ease-in-out forwards';
+          
+          // Change title text mid-animation (at 50% = 1000ms)
+          setTimeout(() => {
+            mainTitle.textContent = mainTitle.textContent === 'STREAMER LITE' ? 'STREAMER X CLOUD' : 'STREAMER LITE';
+          }, 1000);
+        }, 10);
+      }
+      
+      // Play animation immediately
+      playTitleAnimation();
+      
+      // Then repeat every 3 seconds
+      setInterval(playTitleAnimation, 3000);
+    }
+
+    function showWelcomeModal() {
+      const modal = document.getElementById('welcomeModal');
+      const loadingScreen = document.getElementById('loadingScreen');
+      
+      // Always show welcome modal on page load
+      modal.classList.remove('hidden');
+      loadingScreen.classList.remove('visible');
+      localStorage.setItem('welcomeSeen', 'true');
+    }
+
+    // Animate IP address with falling characters
+    function animateIPInput(ip, elementId) {
+      const inputElement = document.getElementById(elementId);
+      const wrapper = inputElement.parentNode;
+      inputElement.value = '';
+      
+      // Clear any previous animation elements
+      const oldChars = wrapper.querySelectorAll('.ip-char');
+      oldChars.forEach(char => char.remove());
+      
+      // Create array of characters
+      const chars = ip.split('');
+      
+      // Add each animated character
+      chars.forEach((char, index) => {
+        const charSpan = document.createElement('span');
+        charSpan.className = 'ip-char';
+        charSpan.textContent = char;
+        charSpan.style.animationDelay = (index * 0.08) + 's';
+        charSpan.style.left = (12 + index * 8) + 'px';
+        wrapper.appendChild(charSpan);
+      });
+      
+      // After animation completes, populate input and remove animation elements
+      setTimeout(() => {
+        inputElement.value = ip;
+        const animChars = wrapper.querySelectorAll('.ip-char');
+        animChars.forEach(char => {
+          char.style.opacity = '0';
+          char.style.transition = 'opacity 0.2s ease-out';
+        });
+        setTimeout(() => {
+          animChars.forEach(char => char.remove());
+        }, 200);
+      }, (chars.length * 80) + 700);
+      
+      // Add glow effect to input
+      inputElement.style.boxShadow = `
+        0 0 15px rgba(229, 9, 20, 0.3),
+        inset 0 0 10px rgba(229, 9, 20, 0.1)
+      `;
+    }
+
+    // Update loading text
+    function updateLoadingText(text, subtext) {
+      document.getElementById('loadingText').textContent = text;
+      document.getElementById('loadingSubtext').textContent = subtext;
+    }
+
+    // Detect current IP and initialize
+    async function detectAndInitialize() {
+      try {
+        // Show loading screen
+        const loadingScreen = document.getElementById('loadingScreen');
+        
+        // Step 1: Detecting IP
+        updateLoadingText('🔍 Detecting IP', 'Retrieving your machine IP...');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Fetch IP from API
+        const ipResponse = await fetch('https://api.ipify.org?format=json', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const ipData = await ipResponse.json();
+        const detectedIP = ipData.ip;
+
+        // Step 2: Modifying
+        updateLoadingText('⚙️ Configuring', 'Applying settings...');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Step 3: Complete
+        updateLoadingText('✓ Ready', 'Loading interface...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Update form with detected IP - animated
+        animateIPInput(detectedIP, 'ipInput');
+        document.getElementById('portInput').value = DEFAULT_PORT;
+        
+        // Save to localStorage
+        localStorage.setItem('serverIP', detectedIP);
+        localStorage.setItem('serverPort', DEFAULT_PORT);
+
+        // Update baseURL
+        updateBaseURL(detectedIP, DEFAULT_PORT);
+
+        // Animate IP display with glow effect
+        const ipDisplay = document.getElementById('currentIP');
+        ipDisplay.style.animation = 'none';
+        setTimeout(() => {
+          ipDisplay.style.animation = 'glow-animation 0.6s ease-out';
+        }, 10);
+
+        // Hide loading screen with fade out
+        await new Promise(resolve => setTimeout(resolve, 300));
+        loadingScreen.classList.add('hidden');
+
+      } catch (error) {
+        console.error('Error detecting IP:', error);
+        // Fallback to default if API fails
+        updateLoadingText('⚠️ Using Default', 'Failed to detect IP, using default...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Update form with default IP - animated
+        animateIPInput(DEFAULT_IP, 'ipInput');
+        document.getElementById('portInput').value = DEFAULT_PORT;
+        localStorage.setItem('serverIP', DEFAULT_IP);
+        localStorage.setItem('serverPort', DEFAULT_PORT);
+        updateBaseURL(DEFAULT_IP, DEFAULT_PORT);
+        
+        document.getElementById('loadingScreen').classList.add('hidden');
+      }
+    }
+
+    // Add glow animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes glow-animation {
+        0% { 
+          box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); 
+          transform: scale(0.95);
+        }
+        50% { 
+          box-shadow: 0 0 20px 10px rgba(229, 9, 20, 0.3); 
+        }
+        100% { 
+          box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); 
+          transform: scale(1);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Load configuration from localStorage
+    function loadServerConfig() {
+      const savedIP = localStorage.getItem('serverIP') || DEFAULT_IP;
+      const savedPort = localStorage.getItem('serverPort') || DEFAULT_PORT;
+      
+      document.getElementById('ipInput').value = savedIP;
+      document.getElementById('portInput').value = savedPort;
+      
+      updateBaseURL(savedIP, savedPort);
+    }
+
+    // Update baseURL and display
+    function updateBaseURL(ip, port) {
+      baseURL = `http://${ip}:${port}`;
+      document.getElementById('currentIP').textContent = `Server: ${baseURL}`;
+    }
+
+    // Save and apply configuration
+    function saveServerConfig() {
+      const ip = document.getElementById('ipInput').value.trim();
+      const port = document.getElementById('portInput').value.trim();
+
+      if (!ip || !port) {
+        setStatus('❌ Please enter both IP and Port!', false);
+        return;
+      }
+
+      localStorage.setItem('serverIP', ip);
+      localStorage.setItem('serverPort', port);
+
+      updateBaseURL(ip, port);
+      setStatus('✓ Connection Updated Successfully!', true);
+    }
+
+    async function sendCommand(endpoint) {
+      try {
+        const res = await fetch(baseURL + endpoint);
+        const text = await res.text();
+        setStatus(text, true);
+      } catch (err) {
+        setStatus('❌ Error connecting to server!', false);
+      }
+    }
+
+    async function updateStatus() {
+      try {
+        const res = await fetch(baseURL + '/status');
+        const text = await res.text();
+        setStatus(text, true);
+      } catch {
+        setStatus('⚠️ Disconnected from server', false);
+      }
+    }
+
+    function setStatus(text, isSuccess) {
+      // Update both status displays
+      const el1 = document.getElementById('status');
+      const el2 = document.getElementById('status2');
+      
+      if (el1) {
+        el1.textContent = text || 'No response';
+        el1.style.color = isSuccess ? '#e50914' : '#ff6b6b';
+        el1.style.textShadow = isSuccess
+          ? '0 0 8px rgba(229, 9, 20, 0.5)'
+          : '0 0 8px rgba(255, 107, 107, 0.5)';
+      }
+      
+      if (el2) {
+        el2.textContent = text || 'No response';
+        el2.style.color = isSuccess ? '#e50914' : '#ff6b6b';
+        el2.style.textShadow = isSuccess
+          ? '0 0 8px rgba(229, 9, 20, 0.5)'
+          : '0 0 8px rgba(255, 107, 107, 0.5)';
+      }
+
+      // Show pop-up if disconnected (only once per state change)
+      if (text && text.includes('Disconnected')) {
+        if (!lastDisconnectState) {
+          lastDisconnectState = true;
+          showDisconnectPopup();
+        }
+      } else {
+        lastDisconnectState = false;
+        // Clear any pending timeout if reconnected
+        if (disconnectPopupTimeout) {
+          clearTimeout(disconnectPopupTimeout);
+          disconnectPopupTimeout = null;
+        }
+      }
+    }
+
+    function showDisconnectPopup() {
+      // Clear any existing timeout
+      if (disconnectPopupTimeout) {
+        clearTimeout(disconnectPopupTimeout);
+      }
+      
+      disconnectPopupTimeout = setTimeout(() => {
+        const popup = document.getElementById('disconnectPopup');
+        popup.classList.add('show');
+        disconnectPopupTimeout = null;
+      }, 10000);
+    }
+
+    function closeDisconnectPopup() {
+      const popup = document.getElementById('disconnectPopup');
+      popup.classList.remove('show');
+    }
+
+    // Page Navigation
+    let currentPage = 1;
+    const totalPages = 3;
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      
+      // Show current page
+      document.getElementById('page' + page).classList.add('active');
+      
+      // Update button states
+      document.getElementById('prevBtn').disabled = page === 1;
+      document.getElementById('nextBtn').disabled = page === totalPages;
+      
+      currentPage = page;
+    }
+
+    function nextPage() {
+      goToPage(currentPage + 1);
+    }
+
+    function previousPage() {
+      goToPage(currentPage - 1);
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      goToPage(1);
+      showWelcomeModal();
+    });
+
+    // Update status every second
+    setInterval(updateStatus, 1000);
+
+    // Particles configuration
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: '#e50914' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.3, random: true },
+        size: { value: 3, random: true },
+        line_linked: {
+          enable: true,
+          distance: 150,
+          color: '#e50914',
+          opacity: 0.2,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 1.5,
+          direction: 'none',
+          random: false,
+          straight: false,
+          bounce: false,
+          out_mode: 'out'
+        }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: {
+          onhover: { enable: true, mode: 'repulse' },
+          onclick: { enable: true, mode: 'push' },
+          resize: true
+        },
+        modes: {
+          repulse: { distance: 100, duration: 0.4 },
+          push: { particles_nb: 4 }
+        }
+      },
+      retina_detect: true
+    });
+  </script>
+</body>
+</html>
