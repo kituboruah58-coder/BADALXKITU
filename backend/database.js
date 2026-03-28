@@ -1,427 +1,195 @@
-const db = require('./database');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-key-change-this-in-production';
-const ADMIN_JWT_EXPIRY = '7d';
+const dbPath = path.join(__dirname, 'auth.db');
+const DEFAULT_ADMIN_EMAIL = String(
+    process.env.DEFAULT_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'kitu@gmail.com'
+).trim().toLowerCase();
+const DEFAULT_ADMIN_PASSWORD = String(
+    process.env.DEFAULT_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'kitu123'
+).trim();
 
-// Generate admin JWT token
-function generateAdminToken(adminId) {
-    return jwt.sign({ adminId, role: 'admin' }, ADMIN_JWT_SECRET, { expiresIn: ADMIN_JWT_EXPIRY });
-}
-
-// Verify admin JWT token
-function verifyAdminToken(token) {
-    try {
-        return jwt.verify(token, ADMIN_JWT_SECRET);
-    } catch (err) {
-        return null;
+function ensureDefaultAdmin() {
+    if (!DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) {
+        console.warn('Default admin seed skipped: missing DEFAULT_ADMIN_EMAIL/DEFAULT_ADMIN_PASSWORD');
+        return;
     }
-}
 
-// Admin login
-async function adminLogin(email, password) {
-    return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM admins WHERE email = ?', [email], async (err, admin) => {
-            if (err) return reject(err);
-            
-            if (!admin) {
-                return reject(new Error('Admin not found'));
-            }
-
-            const passwordMatch = await bcrypt.compare(password, admin.password);
-            
-            if (!passwordMatch) {
-                return reject(new Error('Invalid password'));
-            }
-
-            const token = generateAdminToken(admin.id);
-            
-            resolve({
-                id: admin.id,
-                email: admin.email,
-                token
-            });
-        });
-    });
-}
-
-// Get all users
-function getAllUsers() {
-    return new Promise((resolve, reject) => {
-        db.all('SELECT id, username, email, status, created_at, updated_at, expires_at, last_ip, last_hwid, last_login FROM users ORDER BY created_at DESC', [], (err, users) => {
-            if (err) return reject(err);
-            resolve(users || []);
-        });
-    });
-}
-
-// Get active users with tiers
-function getActiveUsers() {
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT id, username, email, status, created_at, last_ip, last_hwid, last_login,
-                   streamer_lite, streamer_pro, streamer_max, streamer_ultra 
-            FROM users WHERE status = 'active' ORDER BY created_at DESC
-        `, [], (err, users) => {
-            if (err) return reject(err);
-            resolve(users || []);
-        });
-    });
-}
-
-// Get user tiers
-function getUserTiers(userId) {
-    return new Promise((resolve, reject) => {
-        db.get(`
-            SELECT streamer_lite, streamer_pro, streamer_max, streamer_ultra 
-            FROM users WHERE id = ?
-        `, [userId], (err, user) => {
-            if (err) return reject(err);
-            if (!user) return reject(new Error('User not found'));
-            resolve({
-                streamer_lite: !!user.streamer_lite,
-                streamer_pro: !!user.streamer_pro,
-                streamer_max: !!user.streamer_max,
-                streamer_ultra: !!user.streamer_ultra
-            });
-        });
-    });
-}
-
-// Update user tiers
-function updateUserTiers(userId, tiers) {
-    return new Promise((resolve, reject) => {
-        const { streamer_lite, streamer_pro, streamer_max, streamer_ultra } = tiers;
-        db.run(`
-            UPDATE users SET 
-                streamer_lite = ?, streamer_pro = ?, streamer_max = ?, streamer_ultra = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `, [streamer_lite ? 1 : 0, streamer_pro ? 1 : 0, streamer_max ? 1 : 0, streamer_ultra ? 1 : 0, userId], function(err) {
-            if (err) return reject(err);
-            if (this.changes === 0) return reject(new Error('User not found'));
-            resolve({ message: 'User tiers updated successfully', userId });
-        });
-    });
-}
-
-// Get user by ID
-function getUserById(userId) {
-    return new Promise((resolve, reject) => {
-        db.get('SELECT id, username, email, status, created_at, updated_at, expires_at FROM users WHERE id = ?', [userId], (err, user) => {
-            if (err) return reject(err);
-            if (!user) return reject(new Error('User not found'));
-            resolve(user);
-        });
-    });
-}
-
-// Create new user
-async function createUser(username, email, password, expires_at) {
-    return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM users WHERE email = ? OR username = ?', [email, username], async (err, row) => {
-            if (err) return reject(err);
-            
-            if (row) {
-                return reject(new Error('Email or username already exists'));
-            }
-
-            const hashedPassword = await bcrypt.hash(password, 10);
-            
-            db.run(
-                'INSERT INTO users (username, email, password, status, expires_at) VALUES (?, ?, ?, ?, ?)',
-                [username, email, hashedPassword, 'active', expires_at || null],
-                function(err) {
-                    if (err) return reject(err);
-                    
-                    resolve({
-                        id: this.lastID,
-                        username,
-                        email,
-                        status: 'active',
-                        expires_at: expires_at,
-                        created_at: new Date().toISOString()
-                    });
-                }
-            );
-        });
-    });
-}
-
-// Block user
-function blockUser(userId) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'UPDATE users SET status = ? WHERE id = ?',
-            ['blocked', userId],
-            function(err) {
-                if (err) return reject(err);
-                if (this.changes === 0) return reject(new Error('User not found'));
-                
-                resolve({ message: 'User blocked successfully', userId });
-            }
-        );
-    });
-}
-
-// Unblock user
-function unblockUser(userId) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'UPDATE users SET status = ? WHERE id = ?',
-            ['active', userId],
-            function(err) {
-                if (err) return reject(err);
-                if (this.changes === 0) return reject(new Error('User not found'));
-                
-                resolve({ message: 'User unblocked successfully', userId });
-            }
-        );
-    });
-}
-
-// Delete user
-function deleteUser(userId) {
-    return new Promise((resolve, reject) => {
-        // Delete sessions first
-        db.run('DELETE FROM sessions WHERE user_id = ?', [userId], (err) => {
-            if (err) return reject(err);
-            
-            // Delete licenses linked to this user
-            db.run('DELETE FROM licenses WHERE user_id = ?', [userId], (err) => {
-                if (err) return reject(err);
-                
-                // Delete user
-                db.run('DELETE FROM users WHERE id = ?', [userId], function(err) {
-                    if (err) return reject(err);
-                    if (this.changes === 0) return reject(new Error('User not found'));
-                    
-                    resolve({ message: 'User deleted successfully', userId });
-                });
-            });
-        });
-    });
-}
-
-// Get all EXE users
-function getAllExeUsers() {
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT 
-                e.id,
-                e.username,
-                e.status,
-                e.linked_user_id,
-                e.last_ip,
-                e.last_hwid,
-                e.bound_hwid,
-                e.hwid_enforced,
-                e.failed_attempts,
-                e.lock_until,
-                e.last_login,
-                e.created_at,
-                e.updated_at,
-                u.username AS linked_username,
-                u.email AS linked_email
-            FROM exe_users e
-            LEFT JOIN users u ON u.id = e.linked_user_id
-            ORDER BY e.created_at DESC
-        `, [], (err, users) => {
-            if (err) return reject(err);
-            resolve(users || []);
-        });
-    });
-}
-
-// Create EXE user
-async function createExeUser(username, password, linkedUserId = null) {
-    return new Promise((resolve, reject) => {
-        const normalizedUsername = String(username || '').trim();
-        if (!normalizedUsername) {
-            return reject(new Error('EXE username is required'));
+    db.get('SELECT id FROM admins WHERE email = ?', [DEFAULT_ADMIN_EMAIL], async (checkErr, row) => {
+        if (checkErr) {
+            console.error('Error checking default admin:', checkErr);
+            return;
+        }
+        if (row) {
+            console.log(`Default admin exists: ${DEFAULT_ADMIN_EMAIL}`);
+            return;
         }
 
-        db.get(
-            'SELECT id FROM exe_users WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))',
-            [normalizedUsername],
-            async (err, row) => {
-            if (err) return reject(err);
-            if (row) return reject(new Error('EXE username already exists'));
-
-            const hashedPassword = await bcrypt.hash(password, 10);
+        try {
+            const hashedPassword = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
             db.run(
-                'INSERT INTO exe_users (username, password, status, linked_user_id) VALUES (?, ?, ?, ?)',
-                [normalizedUsername, hashedPassword, 'active', linkedUserId || null],
-                function(insertErr) {
-                    if (insertErr) return reject(insertErr);
-                    resolve({
-                        id: this.lastID,
-                        username: normalizedUsername,
-                        linked_user_id: linkedUserId || null,
-                        status: 'active',
-                        created_at: new Date().toISOString()
-                    });
+                'INSERT INTO admins (email, password) VALUES (?, ?)',
+                [DEFAULT_ADMIN_EMAIL, hashedPassword],
+                (insertErr) => {
+                    if (insertErr) {
+                        console.error('Error creating default admin:', insertErr);
+                        return;
+                    }
+                    console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL}`);
                 }
             );
-            }
-        );
-    });
-}
-
-// Block EXE user
-function blockExeUser(userId) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'UPDATE exe_users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            ['blocked', userId],
-            function(err) {
-                if (err) return reject(err);
-                if (this.changes === 0) return reject(new Error('EXE user not found'));
-                resolve({ message: 'EXE user blocked successfully', userId });
-            }
-        );
-    });
-}
-
-// Unblock EXE user
-function unblockExeUser(userId) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'UPDATE exe_users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            ['active', userId],
-            function(err) {
-                if (err) return reject(err);
-                if (this.changes === 0) return reject(new Error('EXE user not found'));
-                resolve({ message: 'EXE user unblocked successfully', userId });
-            }
-        );
-    });
-}
-
-// Delete EXE user
-function deleteExeUser(userId) {
-    return new Promise((resolve, reject) => {
-        db.run('DELETE FROM exe_users WHERE id = ?', [userId], function(err) {
-            if (err) return reject(err);
-            if (this.changes === 0) return reject(new Error('EXE user not found'));
-            resolve({ message: 'EXE user deleted successfully', userId });
-        });
-    });
-}
-
-// Generate random license key
-function generateLicenseKey() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let key = '';
-    for (let i = 0; i < 4; i++) {
-        for (let j = 0; j < 4; j++) {
-            key += chars.charAt(Math.floor(Math.random() * chars.length));
+        } catch (hashErr) {
+            console.error('Error hashing default admin password:', hashErr);
         }
-        if (i < 3) key += '-';
+    });
+}
+
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('Error opening database:', err);
+    } else {
+        console.log('Connected to SQLite database');
+        initializeDatabase();
     }
-    return key;
-}
+});
 
-// Create new license key
-function createLicenseKey(quantity = 1) {
-    return new Promise((resolve, reject) => {
-        const licenses = [];
-        let completed = 0;
-
-        for (let i = 0; i < quantity; i++) {
-            const licenseKey = generateLicenseKey();
-            
-            db.run(
-                'INSERT INTO licenses (license_key, status) VALUES (?, ?)',
-                [licenseKey, 'active'],
-                function(err) {
-                    completed++;
-                    if (err) {
-                        console.error('Error creating license:', err);
-                    } else {
-                        licenses.push({
-                            id: this.lastID,
-                            license_key: licenseKey,
-                            status: 'active',
-                            created_at: new Date().toISOString()
-                        });
-                    }
-                    
-                    if (completed === quantity) {
-                        if (licenses.length === 0) {
-                            reject(new Error('Failed to create license keys'));
-                        } else {
-                            resolve(licenses);
-                        }
-                    }
-                }
-            );
+function initializeDatabase() {
+    // Users table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            streamer_lite INTEGER DEFAULT 0,
+            streamer_pro INTEGER DEFAULT 0,
+            streamer_max INTEGER DEFAULT 0,
+            streamer_ultra INTEGER DEFAULT 0,
+            expires_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) console.error('Error creating users table:', err);
+        else {
+            console.log('Users table ready');
+            // Migration for expires_at
+            db.run(`ALTER TABLE users ADD COLUMN expires_at DATETIME`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('expires_at migration:', err);
+            });
+            // Add tier columns if they don't exist (migration)
+            db.run(`ALTER TABLE users ADD COLUMN streamer_lite INTEGER DEFAULT 0`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('streamer_lite:', err);
+            });
+            db.run(`ALTER TABLE users ADD COLUMN streamer_pro INTEGER DEFAULT 0`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('streamer_pro:', err);
+            });
+            db.run(`ALTER TABLE users ADD COLUMN streamer_max INTEGER DEFAULT 0`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('streamer_max:', err);
+            });
+            db.run(`ALTER TABLE users ADD COLUMN streamer_ultra INTEGER DEFAULT 0`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('streamer_ultra:', err);
+            });
+            // IP/HWID tracking migration
+            db.run(`ALTER TABLE users ADD COLUMN last_ip TEXT`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('last_ip migration:', err);
+            });
+            db.run(`ALTER TABLE users ADD COLUMN last_hwid TEXT`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('last_hwid migration:', err);
+            });
+            db.run(`ALTER TABLE users ADD COLUMN last_login DATETIME`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) console.error('last_login migration:', err);
+            });
         }
     });
-}
 
-// Get all licenses with user details
-function getAllLicenses() {
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT 
-                l.id,
-                l.license_key,
-                l.status,
-                l.created_at,
-                u.email,
-                u.password,
-                u.username,
-                u.created_at as used_date
-            FROM licenses l
-            LEFT JOIN users u ON l.user_id = u.id
-            ORDER BY l.created_at DESC
-        `, [], (err, licenses) => {
-            if (err) return reject(err);
-            resolve(licenses || []);
-        });
+    // Admins table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) console.error('Error creating admins table:', err);
+        else {
+            console.log('Admins table ready');
+            ensureDefaultAdmin();
+        }
+    });
+
+    // License keys table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS licenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            license_key TEXT UNIQUE NOT NULL,
+            user_id INTEGER,
+            status TEXT DEFAULT 'active',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `, (err) => {
+        if (err) console.error('Error creating licenses table:', err);
+        else console.log('Licenses table ready');
+    });
+
+    // Sessions table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `, (err) => {
+        if (err) console.error('Error creating sessions table:', err);
+        else console.log('Sessions table ready');
+    });
+
+    // EXE users table (separate credentials for Python launcher)
+    db.run(`
+        CREATE TABLE IF NOT EXISTS exe_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            linked_user_id INTEGER,
+            last_ip TEXT,
+            last_hwid TEXT,
+            bound_hwid TEXT,
+            hwid_enforced INTEGER DEFAULT 1,
+            failed_attempts INTEGER DEFAULT 0,
+            lock_until DATETIME,
+            last_login DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) console.error('Error creating exe_users table:', err);
+        else console.log('EXE users table ready');
+    });
+
+    db.run(`ALTER TABLE exe_users ADD COLUMN linked_user_id INTEGER`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) console.error('exe_users linked_user_id migration:', err);
+    });
+    db.run(`ALTER TABLE exe_users ADD COLUMN bound_hwid TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) console.error('exe_users bound_hwid migration:', err);
+    });
+    db.run(`ALTER TABLE exe_users ADD COLUMN hwid_enforced INTEGER DEFAULT 1`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) console.error('exe_users hwid_enforced migration:', err);
+    });
+    db.run(`ALTER TABLE exe_users ADD COLUMN failed_attempts INTEGER DEFAULT 0`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) console.error('exe_users failed_attempts migration:', err);
+    });
+    db.run(`ALTER TABLE exe_users ADD COLUMN lock_until DATETIME`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) console.error('exe_users lock_until migration:', err);
     });
 }
 
-// Get user statistics
-function getUserStatistics() {
-    return new Promise((resolve, reject) => {
-        db.all(`
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked
-            FROM users
-        `, [], (err, result) => {
-            if (err) return reject(err);
-            resolve(result[0] || { total: 0, active: 0, blocked: 0 });
-        });
-    });
-}
-
-module.exports = {
-    generateAdminToken,
-    verifyAdminToken,
-    adminLogin,
-    getAllUsers,
-    getActiveUsers,
-    getUserTiers,
-    updateUserTiers,
-    getUserById,
-    createUser,
-    blockUser,
-    unblockUser,
-    deleteUser,
-    getAllExeUsers,
-    createExeUser,
-    blockExeUser,
-    unblockExeUser,
-    deleteExeUser,
-    getUserStatistics,
-    generateLicenseKey,
-    createLicenseKey,
-    getAllLicenses
-};
-
+module.exports = db;
