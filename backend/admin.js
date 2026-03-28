@@ -238,26 +238,35 @@ function getAllExeUsers() {
 // Create EXE user
 async function createExeUser(username, password, linkedUserId = null) {
     return new Promise((resolve, reject) => {
-        db.get('SELECT id FROM exe_users WHERE username = ?', [username], async (err, row) => {
+        const normalizedUsername = String(username || '').trim();
+        if (!normalizedUsername) {
+            return reject(new Error('EXE username is required'));
+        }
+
+        db.get(
+            'SELECT id FROM exe_users WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))',
+            [normalizedUsername],
+            async (err, row) => {
             if (err) return reject(err);
             if (row) return reject(new Error('EXE username already exists'));
 
             const hashedPassword = await bcrypt.hash(password, 10);
             db.run(
                 'INSERT INTO exe_users (username, password, status, linked_user_id) VALUES (?, ?, ?, ?)',
-                [username, hashedPassword, 'active', linkedUserId || null],
+                [normalizedUsername, hashedPassword, 'active', linkedUserId || null],
                 function(insertErr) {
                     if (insertErr) return reject(insertErr);
                     resolve({
                         id: this.lastID,
-                        username,
+                        username: normalizedUsername,
                         linked_user_id: linkedUserId || null,
                         status: 'active',
                         created_at: new Date().toISOString()
                     });
                 }
             );
-        });
+            }
+        );
     });
 }
 

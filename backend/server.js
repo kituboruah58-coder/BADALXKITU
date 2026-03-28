@@ -467,10 +467,11 @@ app.post('/api/auth/device-report', async (req, res) => {
 app.post('/api/exe/login', async (req, res) => {
     try {
         const { username, password, hwid, clientIp } = req.body;
+        const loginUsername = String(username || '').trim();
         const ip = getClientIp(req, clientIp);
         const sanitizedHwid = String(hwid || '').slice(0, 256) || 'unknown';
 
-        if (!username || !password) {
+        if (!loginUsername || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
@@ -491,23 +492,83 @@ app.post('/api/exe/login', async (req, res) => {
             return res.status(401).json({ error: signatureCheck.error });
         }
 
-        const exeUser = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM exe_users WHERE username = ?', [username], (err, row) => {
+        let exeUser = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT * FROM exe_users WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))',
+                [loginUsername],
+                (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
-            });
+                }
+            );
         });
 
         if (!exeUser) {
-            await handleExeSecurityEvent({
-                username,
-                ip,
-                hwid: sanitizedHwid,
-                reason: 'unknown_exe_user',
-                details: 'EXE login attempted with non-existent username',
-                shouldBlock: false
+            const mainUser = await new Promise((resolve, reject) => {
+                db.get(
+                    `SELECT id, username, email, password, status, expires_at 
+                     FROM users 
+                     WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) OR LOWER(TRIM(email)) = LOWER(TRIM(?))`,
+                    [loginUsername, loginUsername],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row || null);
+                    }
+                );
             });
-            return res.status(404).json({ error: 'EXE user not found. Create this account in Admin > EXE Users tab.' });
+
+            if (!mainUser) {
+                await handleExeSecurityEvent({
+                    username,
+                    ip,
+                    hwid: sanitizedHwid,
+                    reason: 'unknown_exe_user',
+                    details: 'EXE login attempted with non-existent username',
+                    shouldBlock: false
+                });
+                return res.status(404).json({ error: 'EXE user not found. Create this account in Admin > EXE Users tab.' });
+            }
+
+            const mainPasswordOk = await bcrypt.compare(password, mainUser.password);
+            if (!mainPasswordOk) {
+                return res.status(401).json({ error: 'Invalid username or password.' });
+            }
+
+            if (mainUser.status === 'blocked') {
+                return res.status(403).json({ error: 'Main app account is blocked. Contact developer on Discord.' });
+            }
+
+            if (mainUser.expires_at && new Date() > new Date(mainUser.expires_at)) {
+                return res.status(403).json({ error: 'Main app account expired. Contact developer for renewal.' });
+            }
+
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT OR IGNORE INTO exe_users 
+                     (username, password, status, linked_user_id, last_ip, last_hwid, bound_hwid, last_login, updated_at) 
+                     VALUES (?, ?, 'active', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                    [loginUsername, mainUser.password, mainUser.id, ip, sanitizedHwid, sanitizedHwid],
+                    function(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+
+            exeUser = await new Promise((resolve, reject) => {
+                db.get(
+                    'SELECT * FROM exe_users WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))',
+                    [loginUsername],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row || null);
+                    }
+                );
+            });
+
+            if (!exeUser) {
+                return res.status(500).json({ error: 'Failed to provision EXE account. Please contact developer.' });
+            }
         }
 
         if (exeUser.status === 'blocked') {
